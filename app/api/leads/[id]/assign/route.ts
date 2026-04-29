@@ -1,10 +1,11 @@
-// After saving assignment
-if (global.io) {
-    // Notify the new agent
-    global.io.to(`agent-${agentId}`).emit('lead-assigned', lead);
-    // Also notify admin (for dashboard update)
-    global.io.to('admin').emit('lead-updated', lead);
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import Lead from '@/models/Lead';
+import ActivityLog from '@/models/ActivityLog';
+import User from '@/models/User';
+import { sendLeadAssignmentEmail } from '@/lib/email';
+import mongoose from 'mongoose';
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
     try {
         const userId = request.headers.get('x-user-id');
@@ -27,7 +28,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         lead.assignedTo = agentId;
         await lead.save();
 
-        // Log activity
         await ActivityLog.create({
             leadId: id,
             action: 'Lead Assigned',
@@ -36,7 +36,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             userId,
         });
 
-        // Send email to new agent
         const agent = await User.findById(agentId).select('email name');
         if (agent) {
             const adminEmail = request.headers.get('x-user-email') || 'Admin';
