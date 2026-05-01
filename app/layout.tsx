@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AuthProvider from "@/components/AuthProvider";
+
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
@@ -19,10 +19,8 @@ export default function RootLayout({
       className="h-full antialiased bg-gray-50"
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-        </AuthProvider>
+        <Navbar />
+        <main className="flex-1">{children}</main>
       </body>
     </html>
   );

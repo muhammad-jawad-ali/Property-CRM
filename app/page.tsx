@@ -1,11 +1,14 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from './api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
+// 1. Added 'async' to the function definition
 export default async function Home() {
-  const session = await getServerSession(authOptions);
 
-  if (session) {
+  // 2. Added 'await' before headers()
+  const headersList = await headers();
+  const userId = headersList.get('x-user-id');
+
+  if (userId) {
     redirect('/dashboard');
   } else {
     redirect('/login');

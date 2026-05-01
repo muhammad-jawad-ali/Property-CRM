@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import ActivityLog from '@/models/ActivityLog';
 import { validateBody, LeadSchema } from '@/lib/validation';
+import { sendNewLeadEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,8 +40,8 @@ export async function POST(request: NextRequest) {
       userId: userId,
     });
 
-    // TODO: Send email notification (later)
-    // TODO: Emit socket event (later)
+    // Send email notification
+    sendNewLeadEmail(lead, '').catch(console.error);
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {

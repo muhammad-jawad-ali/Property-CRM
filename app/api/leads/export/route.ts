@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     // Create CSV header
     const headers = ['Name', 'Email', 'Phone', 'Property Interest', 'Budget', 'Status', 'Score', 'Assigned To', 'Created At'];
-    const rows = leads.map(lead => [
+    const rows = leads.map((lead: any) => [
         lead.name,
         lead.email,
         lead.phone,

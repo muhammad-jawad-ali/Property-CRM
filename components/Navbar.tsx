@@ -1,12 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const [session, setSession] = useState<any>(null);
+  const [status, setStatus] = useState('loading');
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated) setSession(data);
+        setStatus('authenticated');
+      })
+      .catch(() => setStatus('unauthenticated'));
+  }, [pathname]);
+
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setSession(null);
+    router.push('/login');
+    router.refresh();
+  };
 
   if (status === 'loading') return null;
 
@@ -71,7 +90,7 @@ export default function Navbar() {
                     Welcome, <span className="font-semibold text-white">{session.user?.name}</span> ({session.user?.role})
                   </span>
                   <button
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={handleSignOut}
                     className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
                   >
                     Sign Out

@@ -7,7 +7,7 @@ const protectedApiRoutes = ['/api/leads', '/api/leads/'];
 const adminRoutes = ['/api/admin', '/admin'];
 const publicRoutes = ['/api/auth/login', '/api/auth/register', '/login', '/register'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
@@ -25,7 +25,12 @@ export async function middleware(request: NextRequest) {
     try {
         user = await verifyAuth(token);
     } catch {
-        const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        if (pathname.startsWith('/api/')) {
+            const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+            response.cookies.delete('token');
+            return response;
+        }
+        const response = NextResponse.redirect(new URL('/login', request.url));
         response.cookies.delete('token');
         return response;
     }

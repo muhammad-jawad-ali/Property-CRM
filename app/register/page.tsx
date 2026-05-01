@@ -29,7 +29,7 @@ export default function Register() {
         router.push('/login');
       } else {
         const data = await res.json();
-        setError(data.message || 'Registration failed');
+        setError(data.error || data.message || 'Registration failed');
       }
     } catch (err) {
       setError('An error occurred during registration');

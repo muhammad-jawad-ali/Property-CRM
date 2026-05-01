@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -18,17 +18,22 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (res?.error) {
-        setError(res.error);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || data.message || 'Login failed');
       } else {
-        router.push('/dashboard');
-        router.refresh();
+        if (data.user?.role === 'admin') {
+          window.location.href = '/admin/dashboard';
+        } else {
+          window.location.href = '/agent/dashboard';
+        }
       }
     } catch (err) {
       setError('An error occurred during login');

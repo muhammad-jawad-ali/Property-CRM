@@ -1,11 +1,18 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
+// 1. Changed to 'async'
 export default async function Dashboard() {
-  const session = await getServerSession(authOptions);
 
-  if (!session) {
+  // 2. Added 'await'
+  const headersList = await headers();
+  const role = headersList.get('x-user-role');
+
+  if (role === 'admin') {
+    redirect('/admin/dashboard');
+  } else if (role === 'agent') {
+    redirect('/agent/dashboard');
+  } else if (!role) {
     redirect('/login');
   }
 
@@ -13,10 +20,10 @@ export default async function Dashboard() {
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
       <div className="bg-white rounded-lg shadow px-5 py-6 sm:px-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
-        
+
         <div className="border-t border-gray-200 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* Common Widget 1 */}
             <div className="bg-blue-50 overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
