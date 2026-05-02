@@ -6,7 +6,7 @@ import ActivityLog from '@/models/ActivityLog';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const userId = request.headers.get('x-user-id');
@@ -15,7 +15,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid lead ID' }, { status: 400 });
         }
@@ -95,7 +95,7 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const userId = request.headers.get('x-user-id');
@@ -109,7 +109,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid lead ID' }, { status: 400 });
         }

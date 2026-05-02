@@ -4,6 +4,7 @@ export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
   const userRole = request.headers.get('x-user-role');
   const userEmail = request.headers.get('x-user-email');
+  const userName = request.headers.get('x-user-name');
 
   if (!userId) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
       id: userId,
       role: userRole,
       email: userEmail,
-      name: userEmail?.split('@')[0] || 'User', // Fallback for name
+      name: userName || userEmail?.split('@')[0] || 'User',
     }
   });
 }

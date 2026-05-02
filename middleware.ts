@@ -3,11 +3,11 @@ import type { NextRequest } from 'next/server';
 import { verifyAuth } from './lib/auth-middleware';
 import { checkRateLimit } from './lib/rate-limit';
 
-const protectedApiRoutes = ['/api/leads', '/api/leads/'];
 const adminRoutes = ['/api/admin', '/admin'];
+const agentRoutes = ['/api/agent', '/agent'];
 const publicRoutes = ['/api/auth/login', '/api/auth/register', '/login', '/register'];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
@@ -35,10 +35,18 @@ export async function proxy(request: NextRequest) {
         return response;
     }
 
-    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+    // Role-based protection
+    const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+    const isAgentRoute = pathname.startsWith('/agent') || pathname.startsWith('/api/agent');
+
     if (isAdminRoute && user.role !== 'admin') {
-        if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Admin required' }, { status: 403 });
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
+        if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+        return NextResponse.redirect(new URL('/agent/dashboard?error=unauthorized', request.url));
+    }
+
+    if (isAgentRoute && user.role !== 'agent') {
+        if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Agent access required' }, { status: 403 });
+        return NextResponse.redirect(new URL('/admin/dashboard?error=unauthorized', request.url));
     }
 
     if (pathname.startsWith('/api/')) {
@@ -53,6 +61,7 @@ export async function proxy(request: NextRequest) {
     requestHeaders.set('x-user-id', user.userId);
     requestHeaders.set('x-user-role', user.role);
     requestHeaders.set('x-user-email', user.email);
+    requestHeaders.set('x-user-name', user.name);
 
     return NextResponse.next({
         request: { headers: requestHeaders },
@@ -60,5 +69,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/api/:path*', '/admin/:path*', '/agent/:path*', '/login', '/register'],
+    matcher: [
+        '/api/:path*',
+        '/admin/:path*',
+        '/agent/:path*',
+        '/dashboard',
+        '/users',
+        '/settings',
+        '/',
+    ],
 };

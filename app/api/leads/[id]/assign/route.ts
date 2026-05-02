@@ -6,14 +6,17 @@ import User from '@/models/User';
 import { sendLeadAssignmentEmail } from '@/lib/email';
 import mongoose from 'mongoose';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
     try {
         const userId = request.headers.get('x-user-id');
         const userRole = request.headers.get('x-user-role');
         if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         if (userRole !== 'admin') return NextResponse.json({ error: 'Admin only' }, { status: 403 });
 
-        const { id } = params;
+        const { id } = await context.params;
         const { agentId } = await request.json();
         if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(agentId)) {
             return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });

@@ -12,7 +12,10 @@ export function useRealtimeLeads<T>(
     const fetchData = async () => {
         try {
             const result = await fetchFunction();
-            setData(result);
+            // Simple check to prevent unnecessary re-renders if data hasn't changed
+            if (JSON.stringify(result) !== JSON.stringify(data)) {
+                setData(result);
+            }
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Unknown error');

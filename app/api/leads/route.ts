@@ -5,6 +5,7 @@ import Lead from '@/models/Lead';
 import ActivityLog from '@/models/ActivityLog';
 import { validateBody, LeadSchema } from '@/lib/validation';
 import { sendNewLeadEmail } from '@/lib/email';
+import mongoose from 'mongoose';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     // If agent, auto-assign to themselves; if admin, use assignedTo from body (or null)
     const leadData = {
       ...data,
-      assignedTo: userRole === 'agent' ? userId : (data.assignedTo || null),
+      assignedTo: userRole === 'agent' ? userId : (data.assignedTo && data.assignedTo !== '' ? data.assignedTo : null),
     };
     const lead = await Lead.create(leadData);
 
@@ -60,14 +61,53 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    let leads;
-    if (userRole === 'admin') {
-      // Admin sees all leads, populated with assigned agent details
-      leads = await Lead.find().populate('assignedTo', 'name email');
-    } else {
-      // Agent sees only leads assigned to them
-      leads = await Lead.find({ assignedTo: userId }).populate('assignedTo', 'name email');
-    }
+    // Use aggregation to join follow-ups
+    const matchStage = userRole === 'admin' 
+      ? {} 
+      : { assignedTo: new mongoose.Types.ObjectId(userId as string) };
+
+    const leads = await Lead.aggregate([
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'assignedTo',
+          foreignField: '_id',
+          as: 'assignedTo'
+        }
+      },
+      { $unwind: { path: '$assignedTo', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'followups',
+          let: { leadId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$leadId', '$$leadId'] }, completed: false } },
+            { $sort: { followUpDate: 1 } },
+            { $limit: 1 }
+          ],
+          as: 'nextFollowUp'
+        }
+      },
+      { $unwind: { path: '$nextFollowUp', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          phone: 1,
+          propertyInterest: 1,
+          budget: 1,
+          status: 1,
+          score: 1,
+          notes: 1,
+          createdAt: 1,
+          'assignedTo._id': 1,
+          'assignedTo.name': 1,
+          'assignedTo.email': 1,
+          nextFollowUpDate: '$nextFollowUp.followUpDate'
+        }
+      }
+    ]);
 
     return NextResponse.json(leads);
   } catch (error) {
