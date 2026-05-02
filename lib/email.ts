@@ -54,8 +54,17 @@ export const sendNewLeadEmail = async (leadData: any, assignedAgentEmail?: strin
             html: `
         <h2>New Lead Assigned</h2>
         <p>A new lead has been assigned to you:</p>
-        <table border="1" ...>...</table>
-        <p>Please follow up promptly.</p>
+        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Name</td><td>${leadData.name}</td></tr>
+          <tr><td>Email</td><td>${leadData.email}</td></tr>
+          <tr><td>Phone</td><td>${leadData.phone}</td></tr>
+          <tr><td>Property</td><td>${leadData.propertyInterest}</td></tr>
+          <tr><td>Budget</td><td>PKR ${leadData.budget.toLocaleString()}</td></tr>
+          <tr><td>Score</td><td>${leadData.score}</td></tr>
+        </table>
+        <p>Please log in to the CRM to view details and take action.</p>
+        <p>Thank you.</p>
       `,
         });
     }

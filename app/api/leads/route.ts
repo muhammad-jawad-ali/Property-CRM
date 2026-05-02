@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Lead from '@/models/Lead';
 import ActivityLog from '@/models/ActivityLog';
+import User from '@/models/User';
 import { validateBody, LeadSchema } from '@/lib/validation';
 import { sendNewLeadEmail } from '@/lib/email';
 import mongoose from 'mongoose';
@@ -42,7 +43,16 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email notification
-    sendNewLeadEmail(lead, '').catch(console.error);
+    let assignedAgentEmail = '';
+    if (lead.assignedTo) {
+      try {
+        const agent = await User.findById(lead.assignedTo).select('email');
+        if (agent) assignedAgentEmail = agent.email;
+      } catch (err) {
+        console.error('Error fetching agent for email:', err);
+      }
+    }
+    sendNewLeadEmail(lead, assignedAgentEmail).catch(console.error);
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {

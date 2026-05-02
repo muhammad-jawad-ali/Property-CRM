@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         const overdueFollowups = await FollowUp.find({
             followUpDate: { $lt: now },
             completed: false,
+            ...(userRole === 'agent' ? { agentId: userId } : {}),
         }).populate('leadId');
 
         // 2. Inactive leads (no activity log in last 3 days)

@@ -1,44 +1,27 @@
 import mongoose, { Schema, models } from 'mongoose';
 
-const LeadSchema = new Schema({
-  name: {
-    type: String,
-    required: [true, 'Client name is required'],
+const ActivityLogSchema = new Schema({
+  leadId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Lead',
+    required: true,
   },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-  },
-  phone: {
-    type: String,
-    required: [true, 'Phone number is required (for WhatsApp)'],
-  },
-  propertyInterest: {
+  action: {
     type: String,
     required: true,
   },
-  budget: {
-    type: Number,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['New', 'Contacted', 'In Progress', 'Closed'],
-    default: 'New',
-  },
-  notes: {
+  oldValue: {
     type: String,
     default: '',
   },
-  assignedTo: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',          // References the User model
-    default: null,
-  },
-  score: {
+  newValue: {
     type: String,
-    enum: ['High', 'Medium', 'Low'],
-    default: 'Low',
+    default: '',
+  },
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
   createdAt: {
     type: Date,
@@ -46,18 +29,4 @@ const LeadSchema = new Schema({
   },
 });
 
-// MIDDLEWARE: Auto-calculate score based on budget BEFORE saving
-LeadSchema.pre('save', function(next:any) {
-  if (this.isModified('budget')) {
-    if (this.budget > 20000000) {
-      this.score = 'High';
-    } else if (this.budget >= 10000000) {
-      this.score = 'Medium';
-    } else {
-      this.score = 'Low';
-    }
-  }
-  next();
-});
-
-export default models.Lead || mongoose.model('Lead', LeadSchema);
+export default models.ActivityLog || mongoose.model('ActivityLog', ActivityLogSchema);
