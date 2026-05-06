@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -8,22 +8,30 @@ const navItems = [
     { label: 'My Leads', href: '/agent/leads' },
 ];
 
-export default function AgentLayout({ children }: { children: React.ReactNode }) {
+function SearchParamsHandler() {
+    const searchParams = useSearchParams();
     const pathname = usePathname();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
     useEffect(() => {
         if (searchParams.get('error') === 'unauthorized') {
             alert('Access Denied: You are not authorized to access that area.');
-            // Clean up the URL
             const newParams = new URLSearchParams(searchParams.toString());
             newParams.delete('error');
             const cleanUrl = `${pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
             router.replace(cleanUrl);
         }
+    }, [searchParams, pathname, router]);
 
+    return null;
+}
+
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+    useEffect(() => {
         fetch('/api/auth/me')
             .then(res => res.json())
             .then(data => {
@@ -45,6 +53,9 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="flex min-h-screen bg-gray-50">
+            <Suspense fallback={null}>
+                <SearchParamsHandler />
+            </Suspense>
             {/* Sidebar */}
             <aside className="w-64 bg-gray-900 text-white flex flex-col fixed inset-y-0 left-0 z-30">
                 {/* Brand */}

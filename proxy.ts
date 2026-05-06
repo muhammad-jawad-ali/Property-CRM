@@ -7,7 +7,7 @@ const adminRoutes = ['/api/admin', '/admin'];
 const agentRoutes = ['/api/agent', '/agent'];
 const publicRoutes = ['/api/auth/login', '/api/auth/register', '/login', '/register'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
